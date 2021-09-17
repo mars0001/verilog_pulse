@@ -56,8 +56,8 @@ reg [63:0]  r_conf = 64'b0;				// register for configuration bits storage
 reg [2:0]   r_index_conf_bytes = 3'b0;	// configuration byte counter
 reg 		r_conf_received = 1'b0;		// flag that all 8 configuration bytes arrived
 
-// de-metastability
-reg [2:0]	r_spi_done_dmt;
+// detet edge of SPI done signal
+reg [1:0]	r_spi_done_edge;
 
 // counter while the output o_led is LOW
 reg [39:0]	r_pause_count = 40'b0;
@@ -72,22 +72,22 @@ reg [2:0]	r_prev_SM_state = IDLE;
 
 // instantiation of SPI receiver module
 SPI_slave my_spi (
+	.i_clk (i_clk),
 	.i_cs (i_spi_nCS),
 	.i_s_clk (i_spi_clk),
 	.i_mosi (i_spi_mosi),
-	.o_Done (w_done),
+	.o_spi_done (w_done),
 	.o_RX_byte (w_spi_byte)
 );
 
-// de-metastability for SPI done signal
+// detect edge of SPI done signal
 always @(posedge i_clk) begin
-	r_spi_done_dmt <= {r_spi_done_dmt[1:0], w_done};
+	r_spi_done_edge <= {r_spi_done_edge [0], w_done};
 end
 
-// falling edge for the signal so we have a new SPI byte that is process of being received
-// wire w_spi_in_progress_dmt = (r_spi_done_dmt[2:1] == 2'b10);
+
 // rising edge for the signal so we have a new SPI byte that was received
-wire w_spi_done_dmt = (r_spi_done_dmt[2:1] == 2'b01);
+wire w_spi_done_edge = (r_spi_done_edge [1:0] == 2'b01);
 
 always @(posedge i_clk) begin
 	case(r_SM_Main)
@@ -109,10 +109,10 @@ always @(posedge i_clk) begin
 		// state in which we receive all 40 bits of configuration (5 bytes)
 		RECEIVE_CONF_BITS: begin
 			// if a byte was received by the SPI
-			if (w_spi_done_dmt) begin
+			if (w_spi_done_edge) begin
 				
 				// concatenate the received SPI byte to the CONF storage register
-				r_conf <= {r_conf[55:0], w_spi_byte};
+				r_conf <= {r_conf [55:0], w_spi_byte};
 
 				// if we received all 8 bytes go to the IDLE state and tell that the 
 				// configuration word was received
@@ -176,7 +176,7 @@ always @(posedge i_clk) begin
 				r_SM_Main <= RUN;
 			end
 			// upper 24 bits configure the pulse HIGH duration
-			else if (r_pulse_count == r_conf[63:40]) begin
+			else if (r_pulse_count == r_conf [63:40]) begin
 				r_SM_Main <= RUN;
 			end
 			else begin
@@ -194,7 +194,7 @@ always @(posedge i_clk) begin
 				r_SM_Main <= RUN;
 			end
 			// lower 40 bits configure the pulse LOW duration
-			else if (r_pause_count == r_conf[39:0]) begin
+			else if (r_pause_count == r_conf [39:0]) begin
 				r_SM_Main <= RUN;
 			end
 			else begin
