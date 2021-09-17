@@ -24,6 +24,8 @@
 	64-bit configuration word that is received.
 */
 
+`default_nettype none
+
 module pulse_gen (
 	input 	i_clk,			// system clock
     input 	i_reset,		// control signal, will reset the system in waiting for configuration word
@@ -54,7 +56,8 @@ reg [63:0]  r_conf = 64'b0;				// register for configuration bits storage
 reg [2:0]   r_index_conf_bytes = 3'b0;	// configuration byte counter
 reg 		r_conf_received = 1'b0;		// flag that all 8 configuration bytes arrived
 
-reg[2:0]	r_spi_done_dmt;
+// de-metastability
+reg [2:0]	r_spi_done_dmt;
 
 // counter while the output o_led is LOW
 reg [39:0]	r_pause_count = 40'b0;
