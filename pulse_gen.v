@@ -20,7 +20,7 @@
 
 	In order to catch all SPI transactions I am going to use a i_spi_clk (SPI clock)
 	of maximum 8MHz. That should allow a lot of clock edges to evaluate signals comming 
-	from the SPI module. Which means that we will require mX 8 uS for each 
+	from the SPI module. Which means that we will require max 8 uS for each 
 	64-bit configuration word that is received.
 */
 
